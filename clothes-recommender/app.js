@@ -66,7 +66,7 @@ exports.lambdaHandler = async (event, context) => {
 
         let secondaryColour = false
         if (secondaryColour){
-            colourRecommendation.push("red");
+            colourRecommendation.push("purple");
         } else {
             colourRecommendation.push("red");
         }
@@ -87,6 +87,9 @@ exports.lambdaHandler = async (event, context) => {
 
         response = {
             'statusCode': 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "*"
+            },
             'body': JSON.stringify({
                 message: message,
             })

@@ -1,0 +1,15 @@
+{
+  "name": "clothes-recommender",
+  "version": "1.0.0",
+  "description": "Recommend Clothes based on forecast for NodeJS",
+  "main": "app.js",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "tinycolor2": "1.4.2",
+    "hex-to-color-name": "1.0.1"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^8.2.1"
+  }
+}
