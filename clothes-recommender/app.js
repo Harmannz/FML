@@ -2,6 +2,80 @@ const axios = require('axios')
 const tinycolor = require("tinycolor2");
 const hexToColorName = require("hex-to-color-name");
 
+const mockWeatherResponse = {"data": {
+        "city": {
+            "id": 2179537,
+            "name": "Wellington",
+            "coord": {
+                "lon": 174.7756,
+                "lat": -41.2866
+            },
+            "country": "NZ",
+            "population": 1000000,
+            "timezone": 43200
+        },
+        "cod": "200",
+        "message": 17.9210067,
+        "cnt": 1,
+        "list": [
+            {
+                "dt": 1624406400,
+                "sunrise": 1624391236,
+                "sunset": 1624424321,
+                "temp": {
+                    "day": 11.37,
+                    "min": 8.79,
+                    "max": 11.44,
+                    "night": 10.05,
+                    "eve": 9.27,
+                    "morn": 9.19
+                },
+                "feels_like": {
+                    "day": 10.47,
+                    "night": 9.17,
+                    "eve": 8.24,
+                    "morn": 6.83
+                },
+                "pressure": 1024,
+                "humidity": 73,
+                "weather": [
+                    {
+                        "id": 803,
+                        "main": "Clouds",
+                        "description": "broken clouds",
+                        "icon": "04d"
+                    }
+                ],
+                "speed": 6.23,
+                "deg": 179,
+                "gust": 8.98,
+                "clouds": 80,
+                "pop": 0.31
+            }
+        ]
+    }};
+const colorMap = {
+    "White": "#FFFFFF",
+    "Gray": "#808080",
+    "Black": "#000000",
+    "Red": "#FF0000",
+    "Maroon": "#800000",
+    "Yellow": "#FFFF00",
+    "Orange": "#FFA500",
+    "Olive": "#808000",
+    "Green": "#008000",
+    "Dark Green": "#006400",
+    "Aqua": "#00FFFF",
+    "Teal": "#008080",
+    "Blue": "#0000FF",
+    "Dark Blue": "#00008B",
+    "Navy": "#000080",
+    "Fuchsia": "#FF00FF",
+    "Pink": "#FFC0CB",
+    "Purple": "#800080",
+    "Violet": "#EE82EE"
+};
+
 /**
  *
  * Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
@@ -30,11 +104,10 @@ exports.lambdaHandler = async (event, context) => {
         const FORECAST_DAYS = 1; // get today's forecast
         const url = `https://api.openweathermap.org/data/2.5/forecast/daily?id=${process.env.CITY_ID}&cnt=${FORECAST_DAYS}&appid=${process.env.OWM_API_KEY}&units=metric`;
 
-        // const weatherResponse = await axios(url);
-        const weatherResponse = mockWeatherResponse();
+        // const weatherResponse = await axios({"url": url, timeout: 2000});
+        const weatherResponse = mockWeatherResponse;
 
         const weatherToday = weatherResponse.data.list[0];
-        const dayTemperature = weatherToday.feels_like.day;
 
         // Weather description
         // Groups we will use to determine clothing to wear are: Clouds, Clear, Snow, Rain, Drizzle, Thunderstorm
@@ -100,84 +173,5 @@ exports.lambdaHandler = async (event, context) => {
         console.log(err);
         return err;
     }
-
     return response
 };
-
-function mockWeatherResponse() {
-    const weatherData = {
-        "city": {
-            "id": 2179537,
-            "name": "Wellington",
-            "coord": {
-                "lon": 174.7756,
-                "lat": -41.2866
-            },
-            "country": "NZ",
-            "population": 1000000,
-            "timezone": 43200
-        },
-        "cod": "200",
-        "message": 17.9210067,
-        "cnt": 1,
-        "list": [
-            {
-                "dt": 1624406400,
-                "sunrise": 1624391236,
-                "sunset": 1624424321,
-                "temp": {
-                    "day": 11.37,
-                    "min": 8.79,
-                    "max": 11.44,
-                    "night": 10.05,
-                    "eve": 9.27,
-                    "morn": 9.19
-                },
-                "feels_like": {
-                    "day": 10.47,
-                    "night": 9.17,
-                    "eve": 8.24,
-                    "morn": 6.83
-                },
-                "pressure": 1024,
-                "humidity": 73,
-                "weather": [
-                    {
-                        "id": 803,
-                        "main": "Clouds",
-                        "description": "broken clouds",
-                        "icon": "04d"
-                    }
-                ],
-                "speed": 6.23,
-                "deg": 179,
-                "gust": 8.98,
-                "clouds": 80,
-                "pop": 0.31
-            }
-        ]
-    };
-    return {"data": weatherData};
-}
-
-var colorMap = {
-    "White": "#FFFFFF",
-    "Gray": "#808080",
-    "Black": "#000000",
-    "Red": "#FF0000",
-    "Maroon": "#800000",
-    "Yellow": "#FFFF00",
-    "Orange": "#FFA500",
-    "Olive": "#808000",
-    "Green": "#008000",
-    "Dark Green": "#006400",
-    "Aqua": "#00FFFF",
-    "Teal": "#008080",
-    "Blue": "#0000FF",
-    "Dark Blue": "#00008B",
-    "Navy": "#000080",
-    "Fuchsia": "#FF00FF",
-    "Pink": "#FFC0CB",
-    "Purple": "#800080",
-    "Violet": "#EE82EE"
-}
