@@ -2,12 +2,6 @@ const axios = require('axios')
 const tinycolor = require("tinycolor2");
 const hexToColorName = require("hex-to-color-name");
 
-const API_KEY = ''; //TODO: Make private via env config
-const CITY_ID = 2179537; // maps to wellington. Move to env config
-const FORECAST_DAYS = 1; // get today's forecast
-const url = `https://api.openweathermap.org/data/2.5/forecast/daily?id=${CITY_ID}&cnt=${FORECAST_DAYS}&appid=${API_KEY}&units=metric`;
-let response;
-
 /**
  *
  * Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
@@ -27,7 +21,15 @@ let response;
  * // Build a message.
  */
 exports.lambdaHandler = async (event, context) => {
+    if (!process.env.OWM_API_KEY) {
+        throw new Error( "Error reading API KEY");
+    }
+
+    let response;
     try {
+        const FORECAST_DAYS = 1; // get today's forecast
+        const url = `https://api.openweathermap.org/data/2.5/forecast/daily?id=${process.env.CITY_ID}&cnt=${FORECAST_DAYS}&appid=${process.env.OWM_API_KEY}&units=metric`;
+
         // const weatherResponse = await axios(url);
         const weatherResponse = mockWeatherResponse();
 
@@ -73,7 +75,7 @@ exports.lambdaHandler = async (event, context) => {
 
         const message =
             "Good Morning!  ☀️ 💦 🌤 ⛈ \n" +
-            `Today there will be ${weatherToday.weather.description}\n` +
+            `Today there will be ${weatherToday.weather[0].description}\n` +
             "\n" +
             `day: ${weatherToday.feels_like.day.toFixed(0)}°C\n` +
             `night: ${weatherToday.feels_like.night.toFixed(0)}°C\n` +
