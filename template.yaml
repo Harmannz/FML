@@ -28,6 +28,10 @@ Resources:
       Policies:
         - SNSPublishMessagePolicy:
             TopicName: ClothesRecommender
+        - DynamoDBReadPolicy:
+            TableName: ClothesCatalog
+        - DynamoDBWritePolicy:
+            TableName: ClothesCatalog
       Events:
         ClothesRecommender:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -36,6 +40,18 @@ Resources:
             Method: get
 
           # TODO: schedule event source object: https://github.com/aws/serverless-application-model/blob/master/versions/2016-10-31.md#schedule
+  ClothesCatalog:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      ProvisionedThroughput:
+        WriteCapacityUnits: 5
+        ReadCapacityUnits: 5
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - KeyType: HASH
+          AttributeName: id
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
