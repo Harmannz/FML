@@ -10,6 +10,10 @@ Globals:
   Function:
     Timeout: 10
 
+Parameters:
+  OWMAPIKEY:
+    Type: String
+
 Resources:
   ClothesRecommenderFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -19,8 +23,11 @@ Resources:
       Runtime: nodejs14.x
       Environment:
         Variables:
-          OWM_API_KEY: !Ref OWM_API_KEY
+          OWMAPIKEY: !Ref OWMAPIKEY
           CITY_ID: 2179537 # Default to wellington
+      Policies:
+        - SNSPublishMessagePolicy:
+            TopicName: ClothesRecommender
       Events:
         ClothesRecommender:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api

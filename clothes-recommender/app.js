@@ -1,6 +1,8 @@
 const axios = require('axios')
 const tinycolor = require("tinycolor2");
 const hexToColorName = require("hex-to-color-name");
+const AWS = require('aws-sdk')
+AWS.config.update({ region: process.env.AWS_REGION || 'us-east-1' })
 
 const mockWeatherResponse = {"data": {
         "city": {
@@ -95,17 +97,17 @@ const colorMap = {
  * // Build a message.
  */
 exports.lambdaHandler = async (event, context) => {
-    if (!process.env.OWM_API_KEY) {
+    if (!process.env.OWMAPIKEY) {
         throw new Error( "Error reading API KEY");
     }
 
     let response;
     try {
         const FORECAST_DAYS = 1; // get today's forecast
-        const url = `https://api.openweathermap.org/data/2.5/forecast/daily?id=${process.env.CITY_ID}&cnt=${FORECAST_DAYS}&appid=${process.env.OWM_API_KEY}&units=metric`;
+        const url = `https://api.openweathermap.org/data/2.5/forecast/daily?id=${process.env.CITY_ID}&cnt=${FORECAST_DAYS}&appid=${process.env.OWMAPIKEY}&units=metric`;
 
-        // const weatherResponse = await axios({"url": url, timeout: 2000});
-        const weatherResponse = mockWeatherResponse;
+        const weatherResponse = await axios({"url": url, timeout: 2000});
+        // const weatherResponse = mockWeatherResponse;
 
         const weatherToday = weatherResponse.data.list[0];
 
@@ -160,6 +162,18 @@ exports.lambdaHandler = async (event, context) => {
             "\n" +
             "Have a good day! 🎉🎉 🎉 🎉";
 
+        const sns = new AWS.SNS();
+        const params = {
+            Message: message,
+            Subject: "Test SNS From Lambda",
+            TopicArn: "arn:aws:sns:us-east-1:892579079126:ClothesRecommender"
+        };
+
+        sns.publish(params, (data, err) => {
+            if (err) {
+                throw new Error(`Unable to publish to sns: ${err}`);
+            }
+        });
         response = {
             'statusCode': 200,
             "headers": {
