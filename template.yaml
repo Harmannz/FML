@@ -29,9 +29,9 @@ Resources:
         - SNSPublishMessagePolicy:
             TopicName: ClothesRecommender
         - DynamoDBReadPolicy:
-            TableName: ClothesCatalog
+            TableName: harmans-app-ClothesCatalog-1CNOHXJCFFP0E
         - DynamoDBWritePolicy:
-            TableName: ClothesCatalog
+            TableName: harmans-app-ClothesCatalog-1CNOHXJCFFP0E
       Events:
         ClothesRecommender:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api

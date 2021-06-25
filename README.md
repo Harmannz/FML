@@ -37,7 +37,7 @@ To build and deploy your application for the first time, run the following in yo
 
 ```bash
 sam build
-sam deploy --guided
+sam deploy --guided --parameter-overrides 'ParameterKey=OWMAPIKEY,ParameterValue=XXXINSERT Open Weather Map API KeyXXX'
 ```
 
 The first command will build the source of your application. The second command will package and deploy your application to AWS, with a series of prompts:
@@ -49,6 +49,19 @@ The first command will build the source of your application. The second command 
 * **Save arguments to samconfig.toml**: If set to yes, your choices will be saved to a configuration file inside the project, so that in the future you can just re-run `sam deploy` without parameters to deploy changes to your application.
 
 You can find your API Gateway Endpoint URL in the output values displayed after deployment.
+
+The application expects the dynamo table to have data in the format:
+```json
+const catalog = [
+    {"id": "1", "name": "Nike Jumper", "type": "sweatshirt", "colour": "Red", "lastWorn": Date.now()},
+    {"id": "2", "name": "Puma Hoodie", "type": "sweatshirt", "colour": "White", "lastWorn": Date.now()},
+    {"id": "3", "name": "Polo Shirt", "type": "shirt", "colour": "Pink", "lastWorn": Date.now()},
+    {"id": "4", "name": "Sailthru T-Shirt", "type": "shirt", "colour": "Black", "lastWorn": Date.now()},
+    {"id": "5", "name": "Chino", "type": "pants", "colour": "Black", "lastWorn": Date.now()},
+    {"id": "6", "name": "Chino", "type": "pants", "colour": "Blue", "lastWorn": Date.now()},
+    {"id": "7", "name": "Chino", "type": "pants", "colour": "Blue", "lastWorn": Date.now()}
+]
+```
 
 ## Use the SAM CLI to build and test locally
 
@@ -65,7 +78,7 @@ Test a single function by invoking it directly with a test event. An event is a 
 Run functions locally and invoke them with the `sam local invoke` command.
 
 ```bash
-ClothesRecommender$ sam local invoke ClothesRecommenderFunction --event events/event.json
+ClothesRecommender$ sam local invoke ClothesRecommenderFunction --event events/event.json --env-vars env-config.json
 ```
 
 The SAM CLI can also emulate your application's API. Use the `sam local start-api` to run the API locally on port 3000.

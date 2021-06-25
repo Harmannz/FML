@@ -4,6 +4,9 @@
 # aws metafiles
 .aws-sam
 
+# env config for secrets
+env-config.json
+
 # Created by https://www.gitignore.io/api/osx,node,linux,windows
 
 ### Linux ###

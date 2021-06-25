@@ -2,60 +2,12 @@ const axios = require('axios')
 const tinycolor = require("tinycolor2");
 const hexToColorName = require("hex-to-color-name");
 const AWS = require('aws-sdk')
-AWS.config.update({ region: process.env.AWS_REGION || 'us-east-1' })
+AWS.config.update({region: process.env.AWS_REGION || 'us-east-1'})
+const sns = new AWS.SNS();
+const docClient = new AWS.DynamoDB.DocumentClient();
 
-const mockWeatherResponse = {"data": {
-        "city": {
-            "id": 2179537,
-            "name": "Wellington",
-            "coord": {
-                "lon": 174.7756,
-                "lat": -41.2866
-            },
-            "country": "NZ",
-            "population": 1000000,
-            "timezone": 43200
-        },
-        "cod": "200",
-        "message": 17.9210067,
-        "cnt": 1,
-        "list": [
-            {
-                "dt": 1624406400,
-                "sunrise": 1624391236,
-                "sunset": 1624424321,
-                "temp": {
-                    "day": 11.37,
-                    "min": 8.79,
-                    "max": 11.44,
-                    "night": 10.05,
-                    "eve": 9.27,
-                    "morn": 9.19
-                },
-                "feels_like": {
-                    "day": 10.47,
-                    "night": 9.17,
-                    "eve": 8.24,
-                    "morn": 6.83
-                },
-                "pressure": 1024,
-                "humidity": 73,
-                "weather": [
-                    {
-                        "id": 803,
-                        "main": "Clouds",
-                        "description": "broken clouds",
-                        "icon": "04d"
-                    }
-                ],
-                "speed": 6.23,
-                "deg": 179,
-                "gust": 8.98,
-                "clouds": 80,
-                "pop": 0.31
-            }
-        ]
-    }};
+const FORECAST_DAYS = 1; // get today's forecast
+const url = `https://api.openweathermap.org/data/2.5/forecast/daily?id=${process.env.CITY_ID}&cnt=${FORECAST_DAYS}&appid=${process.env.OWMAPIKEY}&units=metric`;
 const colorMap = {
     "White": "#FFFFFF",
     "Gray": "#808080",
@@ -78,6 +30,34 @@ const colorMap = {
     "Violet": "#EE82EE"
 };
 
+const pants = ["Black Chino", "Blue Chino", "Blue Jeans"];
+
+function getTurbanColoursMessage(colourRecommendation) {
+    if (colourRecommendation.length > 1) {
+        return `and either ${colourRecommendation[0]} or ${colourRecommendation[1]} turban`;
+    } else if (colourRecommendation.length === 1) {
+        return `and ${colourRecommendation[0]} turban`;
+    } else {
+        return "";
+    }
+}
+
+// dont have time to query pants so going to choose random for now
+function randomPants() {
+
+    return pants[Math.floor(Math.random()*pants.length)]
+}
+
+function checkReallyWet(weatherCategory) {
+    // category is one of Clouds, Clear, Snow, Rain, Drizzle, Thunderstorm
+    let weatherCategoryUpper = weatherCategory.toUpperCase();
+    if (weatherCategoryUpper == "SNOW" || weatherCategoryUpper == "THUNDERSTORM") {
+        return "Dont forget your puffer jacket!!!"
+    } else if (weatherCategoryUpper == "RAIN" || weatherCategoryUpper == "DRIZZLE") {
+        return "Take your rain jacket!!!"
+    }
+}
+
 /**
  *
  * Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
@@ -98,54 +78,56 @@ const colorMap = {
  */
 exports.lambdaHandler = async (event, context) => {
     if (!process.env.OWMAPIKEY) {
-        throw new Error( "Error reading API KEY");
+        throw new Error("Error reading API KEY");
     }
 
     let response;
     try {
-        const FORECAST_DAYS = 1; // get today's forecast
-        const url = `https://api.openweathermap.org/data/2.5/forecast/daily?id=${process.env.CITY_ID}&cnt=${FORECAST_DAYS}&appid=${process.env.OWMAPIKEY}&units=metric`;
 
         const weatherResponse = await axios({"url": url, timeout: 2000});
-        // const weatherResponse = mockWeatherResponse;
 
         const weatherToday = weatherResponse.data.list[0];
 
-        // Weather description
-        // Groups we will use to determine clothing to wear are: Clouds, Clear, Snow, Rain, Drizzle, Thunderstorm
-        // Get coldest temperature during the day and use to
-        // Use the group to grab the appropriate top to wear.
-        // Use the colour from top to get a matching bottom to wear. Obviously we dont want to get shorts when its cold!!!
-
-        // Get top
         // if temperature is cold or (at most normal and windy), then recommend sweatshirts
-        // else recommend shirt
+        let typeOfTop;
+        if (weatherToday.feels_like.day < 16 || weatherToday.speed > 10) {
+            typeOfTop = "sweatshirt";
+        } else {
+            typeOfTop = "shirt"
+        }
 
+        const DBparams = {
+            TableName: 'harmans-app-ClothesCatalog-1CNOHXJCFFP0E',
+            ExpressionAttributeNames: {'#name': 'type'},
+            FilterExpression: "#name = :val",
+            ExpressionAttributeValues: {":val": typeOfTop}
+        }
+        // should limit the result but I havent learnt that yet and Im running out of time.
 
-        // if cold or windy or temperature is low, then dont get shorts.
-        // order by date worn and get the first item.
+        let data = await docClient.scan(DBparams).promise();
 
-        // if drizzle or rain then offer a rain cheater in addition
-        // if very windy or rain or very cold then offer puffer jacket in addition
+        data.Items.sort(compareItems);
 
-        // Get contrasting turban to the shirt or sweatshirt
-        // Need to return a matching turban colour
+        let top;
+        if(data.Count > 0) {
+            // get first item
+            top = data.Items[0];
+        } else {
+            // default
+            top = {"name": "Nike Jumper", "type": "sweatshirt", "colour": "Red", "lastWorn": Date.now()}
+        }
 
-
-        // get secondary colour from clothing if it exists.
-        // if not, then choose the primary colour.
-        const colour = tinycolor("red");
+        const colour = tinycolor(top.colour);
         const colourRecommendation = [];
+
+
         if (colour.isValid()) {
             let complement = colour.complement();
             colourRecommendation.push(hexToColorName(complement.toHexString(), colorMap));
         }
 
-        let secondaryColour = false
-        if (secondaryColour){
-            colourRecommendation.push("purple");
-        } else {
-            colourRecommendation.push("red");
+        if (colourRecommendation[0].toUpperCase() !== top.colour.toUpperCase()) {
+            colourRecommendation.push(top.colour);
         }
 
         const message =
@@ -158,11 +140,11 @@ exports.lambdaHandler = async (event, context) => {
             `low: ${weatherToday.temp.min.toString()}°C\n` +
             `wind: ${weatherToday.speed.toFixed(0)} KPH\n` +
             "\n" +
-            `Recommend you wear Nike Red Jumper with black chino and either ${colourRecommendation[0]} or ${colourRecommendation[1]} turban.` +
+            `Recommend you wear ${top.name} with ${randomPants()} ${getTurbanColoursMessage(colourRecommendation)}. ${checkReallyWet(weatherToday.weather[0].main)}` +
             "\n" +
+
             "Have a good day! 🎉🎉 🎉 🎉";
 
-        const sns = new AWS.SNS();
         const params = {
             Message: message,
             Subject: "Test SNS From Lambda",
@@ -171,7 +153,7 @@ exports.lambdaHandler = async (event, context) => {
 
         sns.publish(params, (data, err) => {
             if (err) {
-                throw new Error(`Unable to publish to sns: ${err}`);
+                throw new Error(`Unable to publish to sns: ${JSON.stringify(err)}`);
             }
         });
         response = {
@@ -189,3 +171,13 @@ exports.lambdaHandler = async (event, context) => {
     }
     return response
 };
+
+function compareItems( a, b ) {
+    if ( a.lastWorn < b.lastWorn ){
+        return -1;
+    }
+    if ( a.lastWorn > b.lastWorn ){
+        return 1;
+    }
+    return 0;
+}
