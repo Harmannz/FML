@@ -90,7 +90,7 @@ exports.lambdaHandler = async (event, context) => {
 
         // if temperature is cold or (at most normal and windy), then recommend sweatshirts
         let typeOfTop;
-        if (weatherToday.feels_like.day < 16 || weatherToday.speed > 10) {
+        if (weatherToday.feels_like.day < 16 || (weatherToday.feels_like.day <= 20 && weatherToday.speed > 10)) {
             typeOfTop = "sweatshirt";
         } else {
             typeOfTop = "shirt"
