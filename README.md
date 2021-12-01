@@ -9,7 +9,7 @@ When setup correctly, it should:
 - Help be prepared for rainy days!!!
 
 # Example:
-
+<img src="example.png?raw=true">
 
 # ClothesRecommender
 
