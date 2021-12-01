@@ -1,3 +1,16 @@
+# Hello
+
+> “61% of all Americans admit regular struggle with wardrobe panic” - from an article that I cannot remember
+
+This is a hackathon project which recommends clothes to wear by checking the forecast for the day. 
+When setup correctly, it should:
+- Be smart about my clothing choices by recommending outfits with complementary turban colours
+- Make my mornings easy by not having to decide on color combination
+- Help be prepared for rainy days!!!
+
+# Example:
+
+
 # ClothesRecommender
 
 This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes the following files and folders.
